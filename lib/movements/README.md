@@ -1,0 +1,2 @@
+-- setup ports for uart
+    -- chmod 777 for ttySAC4 ?
