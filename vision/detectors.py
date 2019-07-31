@@ -1,66 +1,70 @@
-#Detector incapsulates the whole detection process, which practically means image processing
-#to certain stage and consequent extraction of the required object
-
-#Image processor is a separate substance to process an image with a sequence of filters,
-#such as to_gray, binarization, leave_biggest_connected_component, etc.
+import image_processing
+import cv2
 
 #Filter is an img-to-img transformation; generally from any shape to any shape
 
 class Filter:
-    def __init__(self):
-	pass
+    def __init__(self, name_):
+        self.name = name_
     
     def apply (self, img):
-	pass
+        return img
 
-class id:
-    def __init__(self):
-	pass
-    
+#class tograyscale (Filter):
+#    def __init__ (self):
+#        pass
+#
+#    def apply (self, img):
+#        return cv2.cvtColor (img, cv2.COLOR_BGR2GRAY)
+
+class inrange (Filter):
+    def __init__ (self, low_th_, high_th_):
+        self.low_th  = low_th_
+        self.high_th = high_th_
+
     def apply (self, img):
-	return img
+        return cv2.inRange (img, self.low_th, self.high_th)
 
-class to_grayscale: public Filter
+#find bbox of the connected component with maximal area
+class max_area_cc_bbox (Filter):
     def __init__ (self):
-	pass
+        pass
 
     def apply (self, img):
-	return cv2.cvtColor (img, cv2.COLOR_BGR2GRAY)
+        return image_processing.find_max_bounding_box (img)
 
-class inrange
+#should simply incapsulate basic processing function
+#class filter_connected_components
 
-class leave_biggest_connected_component
+#------------------------------------------------------
 
-class filter_connected_components
-
-
-
-class Image_processor:
-    stages = {}
-
-    filters = {}
-
-    def __init__(self):
-	pass
-
-    def add_filter (new_filter, filter_name):
-	filters.update ()
+#Detector incapsulates the whole detection process, which practically means image processing
+#to certain stage and consequent extraction of the required object
 
 #Any detector (color-based, NN, template-based) is supposed to
-#be a derivative class from Detector.
+#be set as a sequence of filters. The idea is obviously taken from NNs
 
 class Detector:
-    #Basic class for detectors
-    #Functions are to be reloaded
- 
+    filters = []
+    
+    #processing stages (for debugging purposes)
+    stages  = []
+
     def __init__(self):
         pass
     
+    def add_filter (self, new_filter, filter_name):
+        self.filters.append ((new_filter, filter_name))
+    
+    def get_stages (self):
+        return self.stages
+
     def detect(self, image):
-        return ((0, 0), (0, 0))
+        self.stages.append (image)
+	
+        for filter, name in self.filters:
+            curr_state = filter.apply (self.stages [-1].copy ())
+            self.stages.append (curr_state)
 
-#cv2.inRange for HSV color space mask obtainment
-#Biggest connected component is considered as the needle
+        return self.stages [-1]
 
-#class HSV_inRange_detector
-    #...

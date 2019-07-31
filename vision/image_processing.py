@@ -1,3 +1,6 @@
+import cv2
+import numpy as np
+
 #Basic image processing methods
 
 #Method for filling holes in connected components of the mask
@@ -52,30 +55,7 @@ def to_RG_chromaticity (img):
 #of the given criterion, i.e. height, width, area.
 #Not implemented yet.
 
-def find_bounding_box (mask, criterion):
-    result = np.array (mask)
-    output = cv2.connectedComponentsWithStats (mask, 8, cv2.CV_32S)
-    labels_num = output      [0]
-    labels     = output      [1]
-    stats      = output      [2]
-    sz         = stats.shape [0]
-    
-    max_crit_val = 0
-    max_label    = 0
-    
-    for label_num in range (1, sz - 1):
-        if (stats [label_num, cv2.CC_STAT_AREA] > max_w):
-            max_w = stats [label_num, cv2.CC_STAT_AREA]
-            max_label = label_num
-    
-    top    = stats [max_label, cv2.CC_STAT_TOP]
-    left   = stats [max_label, cv2.CC_STAT_LEFT]
-    width  = stats [max_label, cv2.CC_STAT_WIDTH]
-    height = stats [max_label, cv2.CC_STAT_HEIGHT]
-    
-    return (left, top), (left + width, top + height)
-
-#def find_bounding_box (mask):
+#def find_bounding_box (mask, criterion):
 #    result = np.array (mask)
 #    output = cv2.connectedComponentsWithStats (mask, 8, cv2.CV_32S)
 #    labels_num = output      [0]
@@ -83,8 +63,8 @@ def find_bounding_box (mask, criterion):
 #    stats      = output      [2]
 #    sz         = stats.shape [0]
 #    
-#    max_w     = 0
-#    max_label = 0
+#    max_crit_val = 0
+#    max_label    = 0
 #    
 #    for label_num in range (1, sz - 1):
 #        if (stats [label_num, cv2.CC_STAT_AREA] > max_w):
@@ -97,5 +77,28 @@ def find_bounding_box (mask, criterion):
 #    height = stats [max_label, cv2.CC_STAT_HEIGHT]
 #    
 #    return (left, top), (left + width, top + height)
+
+def find_max_bounding_box (mask):
+    result = np.array (mask)
+    output = cv2.connectedComponentsWithStats (mask, 8, cv2.CV_32S)
+    labels_num = output      [0]
+    labels     = output      [1]
+    stats      = output      [2]
+    sz         = stats.shape [0]
+    
+    max_area  = 0
+    max_label = 0
+    
+    for label_num in range (1, sz):
+        if (stats [label_num, cv2.CC_STAT_AREA] > max_area):
+            max_area = stats [label_num, cv2.CC_STAT_AREA]
+            max_label = label_num
+    
+    top    = stats [max_label, cv2.CC_STAT_TOP]
+    left   = stats [max_label, cv2.CC_STAT_LEFT]
+    width  = stats [max_label, cv2.CC_STAT_WIDTH]
+    height = stats [max_label, cv2.CC_STAT_HEIGHT]
+    
+    return (left, top), (left + width, top + height)
 
 
