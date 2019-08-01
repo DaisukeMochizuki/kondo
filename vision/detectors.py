@@ -1,5 +1,6 @@
 import image_processing
 import cv2
+import json
 
 #Filter is an img-to-img transformation; generally from any shape to any shape
 
@@ -52,6 +53,26 @@ class Detector:
 
     def __init__(self):
         pass
+
+    def __init__(self, detector_filename):
+        with open (detector_filename) as f:
+            data = json.load(f)
+
+        for filter in data ["filters"]:
+            filter_name = filter ["name"]
+
+            if (filter_name == "inrange"):
+                low_th   = (int (filter ["l1"]), int (filter ["l2"]), int (filter ["l3"]))
+                high_th  = (int (filter ["h1"]), int (filter ["h2"]), int (filter ["h3"]))
+
+                #print (low_th)
+
+                new_filter = inrange (low_th, high_th)
+
+            if (filter_name == "max_area_cc_bbox"):
+                new_filter = max_area_cc_bbox ()
+
+            self.add_filter (new_filter, filter ["name"])
     
     def add_filter (self, new_filter, filter_name):
         self.filters.append ((new_filter, filter_name))

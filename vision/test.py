@@ -41,13 +41,15 @@ def main ():
 
     str_num = 0
 
-    low_th  = (57, 150, 110)
-    high_th = (67, 160, 120)
+    #low_th  = (57, 150, 110)
+    #high_th = (67, 160, 120)
 
-    detector = detectors.Detector ()
-    detector.add_filter (detectors.inrange (low_th, high_th), "inrange")
-    detector.add_filter (detectors.max_area_cc_bbox (), "bbox extraction")
-
+    #detector = detectors.Detector ()
+    #detector.add_filter (detectors.inrange (low_th, high_th), "inrange")
+    #detector.add_filter (detectors.max_area_cc_bbox (), "bbox extraction")
+    
+    detector = detectors.Detector ('basket_detector.txt')
+    
     while (True):
         #if (INPUT_SOURCE == CAMERA or INPUT_SOURCE == VIDEO):
         #    ret, frame_ = cam.read ()
