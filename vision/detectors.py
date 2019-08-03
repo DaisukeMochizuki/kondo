@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-with_ros = False
+with_ros = True
 import image_processing
 import cv2
 import json
@@ -121,8 +121,8 @@ class Detector:
             self.stages.append (curr_state)
 
         return self.stages [-1]
-    """if with_ros:
-	def callback(self, image_msg):
+    if with_ros:
+        def callback(self, image_msg):
             str_num = 0
             try:
                 frame = self._cv_bridge.imgmsg_to_cv2(image_msg, desired_encoding="passthrough")
@@ -138,7 +138,7 @@ class Detector:
             x, y = detector.detect (frame)
 
             #draw circle on the frame
-            result = cv2.circle (frame.copy (), (x, y), 5, (120, 150, 190), thickness = -1)
+            result = cv2.circle (frame.copy (), (int(x), int(y)), 5, (120, 150, 190), thickness = -1)
 
             cv2.waitKey(2)
 
@@ -158,7 +158,7 @@ class Detector:
             #stages = detector.get_stages ()
 
             #for i in range (2):
-            #    cv2.imshow (str (i), stages[i])"""
+            #    cv2.imshow (str (i), stages[i])
 	
 if __name__ == "__main__":
 	if with_ros:
@@ -166,4 +166,3 @@ if __name__ == "__main__":
 	    conf_file = rospy.get_param('~conf_file')
 	    detector = Detector(conf_file)
 	    rospy.spin()
-
