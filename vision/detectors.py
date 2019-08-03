@@ -121,8 +121,8 @@ class Detector:
             self.stages.append (curr_state)
 
         return self.stages [-1]
-    if with_ros:
-	    def callback(self, image_msg):
+    """if with_ros:
+	def callback(self, image_msg):
             str_num = 0
             try:
                 frame = self._cv_bridge.imgmsg_to_cv2(image_msg, desired_encoding="passthrough")
@@ -149,7 +149,7 @@ class Detector:
             #stages = detector.get_stages ()
 
             #for i in range (2):
-            #    cv2.imshow (str (i), stages[i])
+            #    cv2.imshow (str (i), stages[i])"""
 	
 if __name__ == "__main__":
 	if with_ros:

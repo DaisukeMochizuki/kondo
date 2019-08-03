@@ -1,0 +1,22 @@
+{
+    "filters": [
+        {
+            "name": "inrange",
+            "long_name": "in range",
+            "l1": "57",
+            "l2": "150",
+            "l3": "110",
+            "h1": "67",
+            "h2": "160",
+            "h3": "120"
+        },
+        {
+            "name": "max_area_cc_bbox",
+            "long_name": "maximal area connected component bounding box extraction"
+        },
+        {
+            "name": "bottom_bbox_point",
+            "long_name": "bottom middle-x bounding box point"
+        }
+    ]
+}
