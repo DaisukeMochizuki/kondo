@@ -1,14 +1,17 @@
 #!/usr/bin/env python
+with_ros = True
 import image_processing
 import cv2
 import json
-import rospy
-from sensor_msgs.msg import Image, CompressedImage
-from std_msgs.msg import String
-from geometry_msgs.msg import Point
-from cv_bridge import CvBridge, CvBridgeError
-import cv2
-import numpy as np
+# adding ros stuff
+if with_ros:
+	import rospy
+	from sensor_msgs.msg import Image, CompressedImage
+	from std_msgs.msg import String
+	from geometry_msgs.msg import Point
+	from cv_bridge import CvBridge, CvBridgeError
+	import cv2
+	import numpy as np
 
 #Filter is an img-to-img transformation; generally from any shape to any shape
 
@@ -76,10 +79,11 @@ class Detector:
         pass
 
     def __init__(self, detector_filename):
-	self._cv_bridge = CvBridge()
-        self._sub = rospy.Subscriber('/usb_cam/image_raw', Image, self.callback, queue_size=1)
-        self.features_pub = rospy.Publisher('detector/features', Point, queue_size=1)
-        self.resulted_img = rospy.Publisher('detector/resulted_img', CompressedImage, queue_size=1)
+		if with_ros:
+			self._cv_bridge = CvBridge()
+			self._sub = rospy.Subscriber('/usb_cam/image_raw', Image, self.callback, queue_size=1)
+			self.features_pub = rospy.Publisher('detector/features', Point, queue_size=1)
+			self.resulted_img = rospy.Publisher('detector/resulted_img', CompressedImage, queue_size=1)
 	
         with open (detector_filename) as f:
             data = json.load(f)
@@ -117,39 +121,40 @@ class Detector:
             self.stages.append (curr_state)
 
         return self.stages [-1]
+    if with_ros:
+	    def callback(self, image_msg):
+		str_num = 0
+		try:
+		    frame = self._cv_bridge.imgmsg_to_cv2(image_msg, desired_encoding="passthrough")
+		except CvBridgeError as e:
+		    print(e)
 
-    def callback(self, image_msg):
-        str_num = 0
-        try:
-            frame = self._cv_bridge.imgmsg_to_cv2(image_msg, desired_encoding="passthrough")
-        except CvBridgeError as e:
-            print(e)
+		bbox_tl, bbox_br = self.detect(frame)
 
-        bbox_tl, bbox_br = self.detect(frame)
+		frame_with_bbox = cv2.rectangle (frame.copy (), bbox_tl, bbox_br, (255, 0, 0), 5)
 
-        frame_with_bbox = cv2.rectangle (frame.copy (), bbox_tl, bbox_br, (255, 0, 0), 5)
+		cv2.imshow('cv_img', frame_with_bbox)
+		cv2.waitKey(2)
 
-        cv2.imshow('cv_img', frame_with_bbox)
-        cv2.waitKey(2)
+		img_msg = CompressedImage()
+		img_msg.header.stamp = rospy.Time.now()
+		img_msg.format = "jpeg"
+		img_msg.data = np.array(cv2.imencode('.jpg', frame_with_bbox)[1]).tostring()
+		# Publish new image
+		self.resulted_img.publish(img_msg)
 
-        img_msg = CompressedImage()
-        img_msg.header.stamp = rospy.Time.now()
-        img_msg.format = "jpeg"
-        img_msg.data = np.array(cv2.imencode('.jpg', frame_with_bbox)[1]).tostring()
-        # Publish new image
-        self.resulted_img.publish(img_msg)
+		features_msg = Point(float(bbox_tl[0]), float(bbox_tl[1]), float(0))
+		self.features_pub.publish(features_msg)
 
-        features_msg = Point(float(bbox_tl[0]), float(bbox_tl[1]), float(0))
-        self.features_pub.publish(features_msg)
-        
-        #stages = detector.get_stages ()
-	
-        #for i in range (2):
-        #    cv2.imshow (str (i), stages[i])
+		#stages = detector.get_stages ()
+
+		#for i in range (2):
+		#    cv2.imshow (str (i), stages[i])
 	
 if __name__ == "__main__":
-    rospy.init_node('detector')
-    conf_file = rospy.get_param('~conf_file')
-    detector = Detector(conf_file)
-    rospy.spin()
+	if with_ros:
+	    rospy.init_node('detector')
+	    conf_file = rospy.get_param('~conf_file')
+	    detector = Detector(conf_file)
+	    rospy.spin()
 
