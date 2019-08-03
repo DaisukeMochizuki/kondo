@@ -1,0 +1,6 @@
+<launch>
+    <!-- Sprint launch file -->
+    <node pkg="detectors" type="detectors.py" name="detectors"  output="screen">
+    <param name="conf_file" value="/home/vladimir/catkin_ws/src/detector/test.json" />
+    </node>
+</launch>
