@@ -1,17 +1,17 @@
 #!/usr/bin/env python
-with_ros = True
+with_ros = False
 import image_processing
 import cv2
 import json
-# adding ros stuff
+
 if with_ros:
-	import rospy
-	from sensor_msgs.msg import Image, CompressedImage
-	from std_msgs.msg import String
-	from geometry_msgs.msg import Point
-	from cv_bridge import CvBridge, CvBridgeError
-	import cv2
-	import numpy as np
+    import rospy
+    from sensor_msgs.msg import Image, CompressedImage
+    from std_msgs.msg import String
+    from geometry_msgs.msg import Point
+    from cv_bridge import CvBridge, CvBridgeError
+    import cv2
+    import numpy as np
 
 #Filter is an img-to-img transformation; generally from any shape to any shape
 
@@ -79,11 +79,11 @@ class Detector:
         pass
 
     def __init__(self, detector_filename):
-		if with_ros:
-			self._cv_bridge = CvBridge()
-			self._sub = rospy.Subscriber('/usb_cam/image_raw', Image, self.callback, queue_size=1)
-			self.features_pub = rospy.Publisher('detector/features', Point, queue_size=1)
-			self.resulted_img = rospy.Publisher('detector/resulted_img', CompressedImage, queue_size=1)
+        if with_ros:
+            self._cv_bridge = CvBridge()
+            self._sub = rospy.Subscriber('/usb_cam/image_raw', Image, self.callback, queue_size=1)
+            self.features_pub = rospy.Publisher('detector/features', Point, queue_size=1)
+            self.resulted_img = rospy.Publisher('detector/resulted_img', CompressedImage, queue_size=1)
 	
         with open (detector_filename) as f:
             data = json.load(f)
