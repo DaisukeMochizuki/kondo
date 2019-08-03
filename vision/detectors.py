@@ -34,6 +34,19 @@ class max_area_cc_bbox (Filter):
     def apply (self, img):
         return image_processing.find_max_bounding_box (img)
 
+#returns bottom point of the bbox, middle by x axis
+class bottom_bbox_point (Filter):
+    def __init__ (self):
+        pass
+
+    def apply (self, img):
+        tl, br = img
+
+        x = int ((tl [0] + br [0]) / 2)
+        y = br [1]
+
+        return (x, y)
+
 #should simply incapsulate basic processing function
 #class filter_connected_components
 
@@ -72,6 +85,9 @@ class Detector:
             if (filter_name == "max_area_cc_bbox"):
                 new_filter = max_area_cc_bbox ()
 
+            if (filter_name == "bottom_bbox_point"):
+                new_filter = bottom_bbox_point ()
+
             self.add_filter (new_filter, filter ["name"])
     
     def add_filter (self, new_filter, filter_name):
@@ -84,7 +100,7 @@ class Detector:
         self.stages.append (image)
 	
         for filter, name in self.filters:
-            curr_state = filter.apply (self.stages [-1].copy ())
+            curr_state = filter.apply (self.stages [-1])
             self.stages.append (curr_state)
 
         return self.stages [-1]
