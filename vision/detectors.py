@@ -83,7 +83,7 @@ class Detector:
             self._cv_bridge = CvBridge()
             self._sub = rospy.Subscriber('/usb_cam/image_raw', Image, self.callback, queue_size=1)
             self.features_pub = rospy.Publisher('detector/features', Point, queue_size=1)
-            self.resulted_img = rospy.Publisher('detector/resulted_img', CompressedImage, queue_size=1)
+            #self.resulted_img = rospy.Publisher('detector/resulted_img', CompressedImage, queue_size=1)
 	
         with open (detector_filename) as f:
             data = json.load(f)
@@ -129,21 +129,30 @@ class Detector:
             except CvBridgeError as e:
                 print(e)
 
-            bbox_tl, bbox_br = self.detect(frame)
+            #top left, bottom right
+            #bbox_tl, bbox_br = detector.detect (frame)
+	    #draw bbox on the frame
+            #result = cv2.rectangle (frame.copy (), bbox_tl, bbox_br, (255, 0, 0), 5)
 
-            frame_with_bbox = cv2.rectangle (frame.copy (), bbox_tl, bbox_br, (255, 0, 0), 5)
+            #bottom point coordinates
+            x, y = detector.detect (frame)
 
-            cv2.imshow('cv_img', frame_with_bbox)
+            #draw circle on the frame
+            result = cv2.circle (frame.copy (), (x, y), 5, (120, 150, 190), thickness = -1)
+
             cv2.waitKey(2)
 
-            img_msg = CompressedImage()
-            img_msg.header.stamp = rospy.Time.now()
-            img_msg.format = "jpeg"
-            img_msg.data = np.array(cv2.imencode('.jpg', frame_with_bbox)[1]).tostring()
-            # Publish new image
-            self.resulted_img.publish(img_msg)
+            cv2.imshow ("frame", result)
+            print (x, y)
 
-            features_msg = Point(float(bbox_tl[0]), float(bbox_tl[1]), float(0))
+            #img_msg = CompressedImage()
+            #img_msg.header.stamp = rospy.Time.now()
+            #img_msg.format = "jpeg"
+            #img_msg.data = np.array(cv2.imencode('.jpg', frame_with_bbox)[1]).tostring()
+            # Publish new image
+            #self.resulted_img.publish(img_msg)
+
+            features_msg = Point(float(x), float(y), float(0))
             self.features_pub.publish(features_msg)
 
             #stages = detector.get_stages ()
