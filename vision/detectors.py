@@ -1,6 +1,14 @@
+#!/usr/bin/env python
 import image_processing
 import cv2
 import json
+import rospy
+from sensor_msgs.msg import Image, CompressedImage
+from std_msgs.msg import String
+from geometry_msgs.msg import Point
+from cv_bridge import CvBridge, CvBridgeError
+import cv2
+import numpy as np
 
 #Filter is an img-to-img transformation; generally from any shape to any shape
 
