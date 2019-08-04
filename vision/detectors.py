@@ -59,7 +59,18 @@ class bottom_bbox_point (Filter):
         return (x, y)
 
 #should simply incapsulate basic processing function
-#class filter_connected_components
+class filter_connected_components (Filter):
+    def __init__ (self):
+        pass
+
+    def apply (self, img):
+        tl, br = img
+
+        x = int ((tl [0] + br [0]) / 2)
+        y = br [1]
+
+        return (x, y)
+
 
 #------------------------------------------------------
 

@@ -4,7 +4,7 @@ import numpy as np
 #Basic image processing methods
 
 #Method for filling holes in connected components of the mask
-#In other words, brings all the connected components to simply connected
+#Brings all the connected components to simply connected
 
 def fill_holes (img):
     (h, w) = img.shape
@@ -101,4 +101,37 @@ def find_max_bounding_box (mask):
     
     return (left, top), (left + width, top + height)
 
+#Connected components filtering
+#Supports basic conditions, height/width, area, density (area by w * h ratio)
 
+def _in_range (value, low, high):
+    if ((value < low  and low  != -1) or
+        (value > high and high != -1)):
+        return False
+
+    return True
+
+def erase_little_parts_ (mask, area_low, area_high, hei_low, hei_high,
+                         wid_low, wid_high, den_low, den_high):
+    result = np.array (mask)
+    output = cv2.connectedComponentsWithStats (mask, 8, cv2.CV_32S)
+
+    labels_count = output      [0]
+    labels       = output      [1]
+    stats        = output      [2]
+    sz           = stats.shape [0]
+
+    area   = stats [label_num, cv2.CC_STAT_AREA]
+    height = stats [label_num, cv2.CC_STAT_HEIGHT]
+    width  = stats [label_num, cv2.CC_STAT_WIDTH]
+    
+    density = float (area) / (height * width)
+
+    for label_num in range (0, sz - 1):
+        if (_in_range (area, area_low, area_high) and
+            _in_range (height, hei_low, hei_high) and
+            _in_range (width, wid_low, wid_high) and
+            _in_range (density, den_low, den_high)):
+            result [labels == label_num] = 0
+    
+    return result

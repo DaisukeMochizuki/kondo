@@ -63,10 +63,15 @@ def main ():
         cv2.waitKey (1)    
 	
 	#top left, bottom right
-        bbox_tl, bbox_br = detector.detect (frame)
-
+        #bbox_tl, bbox_br = detector.detect (frame)
 	#draw bbox on the frame
-        frame_with_bbox = cv2.rectangle (frame.copy (), bbox_tl, bbox_br, (255, 0, 0), 5)
+        #result = cv2.rectangle (frame.copy (), bbox_tl, bbox_br, (255, 0, 0), 5)
+
+        #bottom point coordinates
+        x, y = detector.detect (frame)
+
+        #draw circle on the frame
+        result = cv2.circle (frame.copy (), (x, y), 5, (120, 150, 190), thickness = -1)
 
         stages = detector.get_stages ()
 	
@@ -77,7 +82,7 @@ def main ():
 	
 	#resultant_frame = form_images (processing_stages)
         
-        cv2.imshow ("frame", frame_with_bbox)
+        cv2.imshow ("frame", result)
 
         time.sleep (0.02)
 
