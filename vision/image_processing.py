@@ -51,6 +51,18 @@ def to_RG_chromaticity (img):
     
     return turned
 
+# Single-channel image to three-channel
+# Forgive me Father for I have sinned
+def to_three (img):
+    sh = img.shape
+
+    result = np.zeros((sh[0], sh[1], 3), img.dtype)
+
+    for i in range(0, 3):
+        result[:, :, i] = img.copy()
+
+    return result
+
 #Method for finding the bounding box of the connected component having the biggest value
 #of the given criterion, i.e. height, width, area.
 #Not implemented yet.
