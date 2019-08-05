@@ -3,22 +3,27 @@ import numpy as np
 from matplotlib import pyplot as plt
 from detectors import inrange
 import os
-#from image_processing import to_three
+import sys
+from image_processing import to_three
 
 def nothing (x):
     pass
 
 cv2.namedWindow ('Colorbars')
 
-cv2.createTrackbar ("l1", "Colorbars", 0, 255, nothing)
-cv2.createTrackbar ("h1", "Colorbars", 0, 255, nothing)
-cv2.createTrackbar ("l2", "Colorbars", 0, 255, nothing)
-cv2.createTrackbar ("h2", "Colorbars", 0, 255, nothing)
-cv2.createTrackbar ("l3", "Colorbars", 0, 255, nothing)
-cv2.createTrackbar ("h3", "Colorbars", 0, 255, nothing)
+cv2.createTrackbar ("l1", "Colorbars",   0, 255, nothing)
+cv2.createTrackbar ("h1", "Colorbars", 255, 255, nothing)
+cv2.createTrackbar ("l2", "Colorbars",   0, 255, nothing)
+cv2.createTrackbar ("h2", "Colorbars", 255, 255, nothing)
+cv2.createTrackbar ("l3", "Colorbars",   0, 255, nothing)
+cv2.createTrackbar ("h3", "Colorbars", 255, 255, nothing)
 
-img = cv2.imread('images/basket/3.jpg')
-#img = cv2.resize(img, (0,0), fx=0.5, fy=0.5)
+pict_path = 'images/basket/3.jpg'
+
+if (len(sys.argv) == 2):
+    pict_path = sys.argv [1]
+
+img = cv2.imread (pict_path)
 
 low_th  = (57, 150, 110)
 high_th = (67, 160, 120)
@@ -41,9 +46,13 @@ while(1):
     mask = inrange_filter.apply (img)
 
     enlighted = img.copy ()
-    enlighted [:, :, 2] = np.add (enlighted [:, :, 0], np.multiply (mask, 0.8))
+    enlighted [:, :, 0] = np.array (np.add (enlighted [:, :, 0], np.multiply (mask, 0.5)), dtype = np.uint8)
 
-    cv2.imshow ("enlighted", enlighted)
+    #cv2.imshow ("enlighted", enlighted)
+    #cv2.imshow ("mask", mask)
+
+    result = np.concatenate ((enlighted, to_three (mask)), axis = 1)
+    cv2.imshow ("result", result)
 
     os.system ('clear')    
     print (low_th, high_th)
