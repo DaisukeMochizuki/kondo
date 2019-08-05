@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-with_ros = False
+with_ros = True
 import image_processing
 import cv2
 import json
@@ -8,7 +8,7 @@ if with_ros:
     import rospy
     from sensor_msgs.msg import Image, CompressedImage
     from std_msgs.msg import String
-    from geometry_msgs.msg import Point
+    from geometry_msgs.msg import Point, Polygon
     from cv_bridge import CvBridge, CvBridgeError
     import cv2
     import numpy as np
@@ -31,11 +31,6 @@ class Filter:
 
 class inrange (Filter):
     def __init__ (self, low_th_, high_th_):
-        #self.set_ths (low_th_, high_th_)
-        self.low_th  = low_th_
-        self.high_th = high_th_
-
-    def set_ths (self, low_th_, high_th_):
         self.low_th  = low_th_
         self.high_th = high_th_
 
@@ -64,18 +59,7 @@ class bottom_bbox_point (Filter):
         return (x, y)
 
 #should simply incapsulate basic processing function
-class filter_connected_components (Filter):
-    def __init__ (self):
-        pass
-
-    def apply (self, img):
-        tl, br = img
-
-        x = int ((tl [0] + br [0]) / 2)
-        y = br [1]
-
-        return (x, y)
-
+#class filter_connected_components
 
 #------------------------------------------------------
 
@@ -97,9 +81,13 @@ class Detector:
     def __init__(self, detector_filename):
         if with_ros:
             self._cv_bridge = CvBridge()
-            self._sub = rospy.Subscriber('/usb_cam/image_raw', Image, self.callback, queue_size=1)
-            self.features_pub = rospy.Publisher('detector/features', Point, queue_size=1)
-            #self.resulted_img = rospy.Publisher('detector/resulted_img', CompressedImage, queue_size=1)
+            self._sub = rospy.Subscriber('/camera/image_raw_rhoban', Image, self.basket_callback, queue_size=1)
+            self.basket_top = rospy.Publisher('detectors/basket_top', Point, queue_size=1)
+            self.basket_bottom = rospy.Publisher('detectors/basket_bottom', Point, queue_size=1)
+            self.obstacles = rospy.Publisher('detectors/obstacles', Polygon, queue_size=1)
+
+
+            self.resulted_img = rospy.Publisher('detectors/resulted_img', CompressedImage, queue_size=1)
 	
         with open (detector_filename) as f:
             data = json.load(f)
@@ -130,6 +118,7 @@ class Detector:
         return self.stages
 
     def detect(self, image):
+        self.stages = []
         self.stages.append (image)
 	
         for filter, name in self.filters:
@@ -137,49 +126,85 @@ class Detector:
             self.stages.append (curr_state)
 
         return self.stages [-1]
-    """if with_ros:
-	def callback(self, image_msg):
-            str_num = 0
+
+
+    if with_ros:
+
+        def get_hsv_image(self, ros_image_msg):
             try:
-                frame = self._cv_bridge.imgmsg_to_cv2(image_msg, desired_encoding="passthrough")
+                frame = self._cv_bridge.imgmsg_to_cv2(ros_image_msg, desired_encoding="passthrough")
+                frame = cv2.cvtColor(frame, cv2.COLOR_YCrCb2RGB)
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+                return frame        
             except CvBridgeError as e:
                 print(e)
 
+        def basket_callback(self, img_msg):
+            str_num = 0
+            frame = self.get_hsv_image(img_msg)
+            #print(frame.shape)
+	        #cv2.imshow ("frame", frame)
             #top left, bottom right
-            #bbox_tl, bbox_br = detector.detect (frame)
+            bbox_tl, bbox_br = self.detect(frame)
+            print(bbox_tl, bbox_br)
+            #calc basket top and bottom
+            x_b = (bbox_br[0] + bbox_tl[0])/2
+            y_b = bbox_br[1]
+            x_t = (bbox_br[0] + bbox_tl[0])/2
+            y_t = bbox_tl[1]
 	    #draw bbox on the frame
             #result = cv2.rectangle (frame.copy (), bbox_tl, bbox_br, (255, 0, 0), 5)
-
+	        #frame = cv2.cvtColor(frame, cv2.COLOR_YCR_CB2HSV)
+	        #frame  = cv2.cvtColor(frame, cv2.COLOR_YCrCb2RGB)
+	        #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             #bottom point coordinates
-            x, y = detector.detect (frame)
+            #x, y = detector.detect (frame)
 
             #draw circle on the frame
-            result = cv2.circle (frame.copy (), (x, y), 5, (120, 150, 190), thickness = -1)
+            #result = cv2.circle (frame.copy (), (int(x), int(y)), 5, (120, 150, 190), thickness = -1)
 
             cv2.waitKey(2)
 
-            cv2.imshow ("frame", result)
-            print (x, y)
+            #cv2.imshow ("frame", result)
+            #print (x, y)
 
-            #img_msg = CompressedImage()
-            #img_msg.header.stamp = rospy.Time.now()
+           # img_msg = CompressedImage()
+           # img_msg.header.stamp = rospy.Time.now()
             #img_msg.format = "jpeg"
-            #img_msg.data = np.array(cv2.imencode('.jpg', frame_with_bbox)[1]).tostring()
-            # Publish new image
-            #self.resulted_img.publish(img_msg)
+          #  img_msg.data = np.array(cv2.imencode('.jpg', frame_with_bbox)[1]).tostring()
+         #  # Publish new image
+           # self.resulted_img.publish(img_msg)
 
-            features_msg = Point(float(x), float(y), float(0))
-            self.features_pub.publish(features_msg)
+            basketT_msg = Point(float(x_t), float(y_t), float(0))
+            basketB_msg = Point(float(x_b), float(y_b), float(0))
+            self.basket_top.publish(basketT_msg)
+            self.basket_bottom.publish(basketB_msg)
+
+            
+            
+            
 
             #stages = detector.get_stages ()
 
-            #for i in range (2):
-            #    cv2.imshow (str (i), stages[i])"""
+           # for i in range (2):
+            #    cv2.imshow (str (i), stages[i])
+
+
+        
+        
+        # obstacles detection and publishing
+
+        #def obstacles_callback(self, img_msg):
+            frame = self.get_hsv_image(img_msg)
+
+            #detected_obstacles = self.detect(frame)
+            detected_obstacles = tuple(Point(1.0, 2.0, 0.0), Point(14.0, 2.5, 2.0), Point(11.0, 142.0, 1.0))
+            self.obstacles.publish(detected_obstacles)
+
 	
 if __name__ == "__main__":
 	if with_ros:
-	    rospy.init_node('detector')
+	    rospy.init_node('detectors')
 	    conf_file = rospy.get_param('~conf_file')
 	    detector = Detector(conf_file)
 	    rospy.spin()
-
