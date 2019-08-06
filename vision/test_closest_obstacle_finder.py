@@ -1,7 +1,7 @@
 import detectors
 import cv2
 import time
-
+ 
 #TODO: implement class, incapsulating input source
 #possible inputs: video, camera, photo
 
@@ -85,9 +85,7 @@ def main ():
         cv2.imshow ("frame", result)
 
         time.sleep (0.02)
-
-        #clear_output (wait=True)
-        
+       
         keyb = cv2.waitKey (1) & 0xFF
         
         if (keyb == ord('q')):
