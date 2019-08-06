@@ -1,6 +1,7 @@
 import detectors
 import cv2
 import time
+import os
 
 #TODO: implement class, incapsulating input source
 #possible inputs: video, camera, photo
@@ -12,8 +13,9 @@ PHOTO  = 2
 video_path = ""
 video_file = ""
 
-photo_path = "/Users/elijah/Dropbox/Programming/kondo/vision/images/basket/"
-photo_file = "2.jpg"
+photo_path = "/Users/elijah/Dropbox/Programming/kondo/vision/images/"
+photo_file = "basket/2.jpg"
+#photo_file = "no_basket.png"
 
 output_path = "/Users/elijah/Dropbox/Programming/RoboCup/nao_cv/geometrical/chessboard_images/"
 
@@ -68,10 +70,21 @@ def main ():
         #result = cv2.rectangle (frame.copy (), bbox_tl, bbox_br, (255, 0, 0), 5)
 
         #bottom point coordinates
-        x, y = detector.detect (frame)
+        (x, y), success = detector.detect (frame)
+
+        #print (success)
+
+        result = frame.copy ()
+
+        os.system ('clear')
 
         #draw circle on the frame
-        result = cv2.circle (frame.copy (), (x, y), 5, (120, 150, 190), thickness = -1)
+        if (success == True):
+            print ("detected")
+            result = cv2.circle (result, (x, y), 5, (120, 150, 190), thickness = -1)
+
+        else:
+            print ("not detected")
 
         stages = detector.get_stages ()
 	

@@ -101,6 +101,11 @@ def find_max_bounding_box (mask):
     max_area  = 0
     max_label = 0
     
+    success = True
+
+    if (sz == 1):
+        success = False
+
     for label_num in range (1, sz):
         if (stats [label_num, cv2.CC_STAT_AREA] > max_area):
             max_area = stats [label_num, cv2.CC_STAT_AREA]
@@ -111,7 +116,7 @@ def find_max_bounding_box (mask):
     width  = stats [max_label, cv2.CC_STAT_WIDTH]
     height = stats [max_label, cv2.CC_STAT_HEIGHT]
     
-    return (left, top), (left + width, top + height)
+    return ((left, top), (left + width, top + height)), success
 
 #Connected components filtering
 #Supports basic conditions, height/width, area, density (area by w * h ratio)
