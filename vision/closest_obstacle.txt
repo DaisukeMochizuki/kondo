@@ -1,22 +1,16 @@
 {
     "filters": [
         {
-            "name": "inrange",
-            "long_name": "in range",
-            "l1": "57",
-            "l2": "150",
-            "l3": "110",
-            "h1": "67",
-            "h2": "160",
-            "h3": "120"
-        },
-        {
-            "name": "max_area_cc_bbox",
-            "long_name": "maximal area connected component bounding box extraction"
-        },
-        {
-            "name": "bottom_bbox_point",
-            "long_name": "bottom middle-x bounding box point"
+            "name": "find_obstacles_distances",
+            "long_name" : "find_obstacles_distances",
+            "types_num" : "1",
+            "1l1" : "110",
+            "1l2" : "5",
+            "1l3" : "0",
+            "1h1" : "255",
+            "1h2" : "117",
+            "1h3" : "57"
+                
         }
     ]
 }

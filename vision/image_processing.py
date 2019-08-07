@@ -128,8 +128,8 @@ def _in_range (value, low, high):
 
     return True
 
-def erase_little_parts_ (mask, area_low, area_high, hei_low, hei_high,
-                         wid_low, wid_high, den_low, den_high):
+def filter_connected_components (mask, area_low = -1, area_high = -1, hei_low = -1, hei_high = -1,
+                wid_low = -1, wid_high = -1, den_low = -1, den_high = -1):
     result = np.array (mask)
     output = cv2.connectedComponentsWithStats (mask, 8, cv2.CV_32S)
 
@@ -138,13 +138,13 @@ def erase_little_parts_ (mask, area_low, area_high, hei_low, hei_high,
     stats        = output      [2]
     sz           = stats.shape [0]
 
-    area   = stats [label_num, cv2.CC_STAT_AREA]
-    height = stats [label_num, cv2.CC_STAT_HEIGHT]
-    width  = stats [label_num, cv2.CC_STAT_WIDTH]
-    
-    density = float (area) / (height * width)
-
     for label_num in range (0, sz - 1):
+        area   = stats [label_num, cv2.CC_STAT_AREA]
+        height = stats [label_num, cv2.CC_STAT_HEIGHT]
+        width  = stats [label_num, cv2.CC_STAT_WIDTH]
+    
+        density = float (area) / (height * width)
+
         if (_in_range (area, area_low, area_high) and
             _in_range (height, hei_low, hei_high) and
             _in_range (width, wid_low, wid_high) and

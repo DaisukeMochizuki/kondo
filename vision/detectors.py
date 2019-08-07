@@ -3,6 +3,23 @@ with_ros = False
 import image_processing
 import cv2
 import json
+import numpy as np
+
+#TODO: Move parameters parsing into the filters constructors from Detector constructor
+#TODO: Implement simultaneous stages displaying in single window
+#TODO: Document the logics behind the project architecture, filters creation
+#TODO: Refactor parameters extraction in find_obstacles_distances creation, automate
+#      types number obtainment
+#TODO: Move code to standard Python style
+#TODO: Add morphological filters, blurring filter
+
+#------------------------------------------------------------------------------------
+
+#TODO_FUTURE: Make up a way to plug filters in another filters.
+#             Closest obstacle finder uses inrange, morphology, connected components filtering,
+#             iterating
+
+#TODO_FUTURE: Filter can store its parameters in a dictionary
 
 if with_ros:
     import rospy
@@ -14,6 +31,8 @@ if with_ros:
     import numpy as np
 
 #Filter is an img-to-img transformation; generally from any shape to any shape
+#Previous comment was written in the very beginning of the development
+#Filter is an anything-to-anything transformation
 
 class Filter:
     def __init__(self, name_):
@@ -75,14 +94,94 @@ class filter_connected_components (Filter):
     def __init__ (self):
         Filter.__init__ (self, "filter_connected_components")
 
+    def apply (self, img, area_low = -1, area_high = -1, hei_low = -1, hei_high = -1,
+               wid_low = -1, wid_high = -1, den_low = -1, den_high = -1):
+        return image_processing.filter_connected_components (img, area_low, area_high,
+               hei_low, hei_high, wid_low, wid_high, den_low, den_high)
+
+#finds pixel distance (by y axis) from the bottom of the frame to the closest obstacle
+#returns list of points (x, y, obstacle type)
+class find_obstacles_distances (Filter):
+    def __init__ (self, ranges_):
+        Filter.__init__ (self, "find_obstacles_distances")
+        self.ranges = ranges_
+        self.inrange_filter = inrange ((0, 0, 0), (255, 255, 255))
+        self.cc_filter = filter_connected_components ()
+
+    #def get_obstacles(img):
+    #    smart_gray = 0.5 * img[:,:,2] + 0.5 * img[:,:,1]
+    #    converted = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+    #
+    #    # white color mask
+    #    lower = np.uint8([100, 100, 100])
+    #    upper = np.uint8([120, 200, 200])
+    #    binarized = cv2.inRange(converted, lower, upper)
+    #
+    #    op_ker = 12
+    #    cl_ker = 12
+    #    morph = binarized.astype('uint8')
+    #    morph = cv2.morphologyEx(binarized, cv2.MORPH_OPEN, np.ones((op_ker, op_ker),np.uint8))
+    #    morph = cv2.morphologyEx(morph, cv2.MORPH_CLOSE, np.ones((cl_ker,cl_ker),np.uint8))
+    #
+    #    return morph
+
+    def _get_obstacles_dists (self, obstacles):
+        obstacles_flipped = cv2.flip (obstacles, 0)
+        distances = np.argmax (obstacles_flipped, axis=0)
+
+        #print ("fuck")
+        #print (distances)
+
+        return distances
+
     def apply (self, img):
-        tl, br = img
+        result = []
+        labels = []
 
-        x = int ((tl [0] + br [0]) / 2)
-        y = br [1]
+        sh = img.shape
 
-        return (x, y)
+        for i in range (sh [1]):
+            labels.append (0)
 
+        filled = False
+
+        for range_num in range (len (self.ranges)):
+            range_ = self.ranges [range_num]
+
+            self.inrange_filter.set_ths (range_ [0], range_ [1])
+            mask = self.inrange_filter.apply (img)
+            mask = self.cc_filter.apply (mask, 10)
+
+            cv2.imshow ("blyad", mask)
+
+            op_ker = 12
+            cl_ker = 12
+
+            morph = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((op_ker, op_ker),np.uint8))
+            morph = cv2.morphologyEx(morph, cv2.MORPH_CLOSE, np.ones((cl_ker,cl_ker),np.uint8))
+
+            temp_result = self._get_obstacles_dists (morph)
+
+            if (filled == False):
+                filled = True
+                result = temp_result.copy ()
+
+            for i in range (len (temp_result)):
+                if (temp_result [i] != 0):
+                    temp_result [i] = sh [0] - temp_result [i]
+
+            for i in range (len (temp_result)):
+                if (temp_result [i] <= result [i] and temp_result [i] != 0):
+                    result [i] = temp_result [i]
+                    labels [i] = range_num + 1
+
+        #for i in range (sh [1]):
+        #    result.append ((i, 200, i))
+
+        #print ("ll")
+        #print (labels)
+
+        return result, labels
 
 #------------------------------------------------------
 
@@ -109,7 +208,7 @@ class Detector:
             #self.resulted_img = rospy.Publisher('detector/resulted_img', CompressedImage, queue_size=1)
 	
         with open (detector_filename) as f:
-            data = json.load(f)
+            data = json.load (f)
 
         for filter in data ["filters"]:
             filter_name = filter ["name"]
@@ -127,6 +226,26 @@ class Detector:
 
             if (filter_name == "bottom_bbox_point"):
                 new_filter = bottom_bbox_point ()
+
+            if (filter_name == "find_obstacles_distances"):
+                types_num = int (filter ["types_num"])
+                
+                ranges = []
+
+                for i in range (types_num):
+                    type_num = str (i + 1)
+
+                    low_th   = (int (filter [type_num + "l1"]),
+                                int (filter [type_num + "l2"]),
+                                int (filter [type_num + "l3"]))
+
+                    high_th  = (int (filter [type_num + "h1"]),
+                                int (filter [type_num + "h2"]),
+                                int (filter [type_num + "h3"]))
+
+                    ranges.append ((low_th, high_th))
+                
+                new_filter = find_obstacles_distances (ranges)
 
             self.add_filter (new_filter, filter ["name"])
     
